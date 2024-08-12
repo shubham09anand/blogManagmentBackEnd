@@ -1,0 +1,86 @@
+package services
+
+import (
+	"context"
+
+	connection "github.com/shubham09anand/blogManagement/connection"
+	response "github.com/shubham09anand/blogManagement/error"
+	model "github.com/shubham09anand/blogManagement/model"
+	"go.mongodb.org/mongo-driver/bson"
+)
+
+type UserProfileServices struct{}
+
+var conn_1, err_1 = connection.ConnectDB()
+
+var collectionProfile = conn_1.Client.Database("blogManagement").Collection("profile")
+
+func (s *UserProfileServices) Profile(data *model.UserProfile) (*response.ServerErrRes, *response.ServerRes, error) {
+
+	if err_1 != nil {
+		return &response.ServerErrRes{
+			Status:   400,
+			Response: "Sever Falied",
+		}, nil, err_1
+	}
+
+	result, err := collectionProfile.InsertOne(context.Background(), data)
+
+	if err != nil {
+		return nil, &response.ServerRes{
+			Status:   400,
+			Success:  false,
+			Response: nil,
+			Error:    err,
+		}, err
+	}
+
+	return nil, &response.ServerRes{
+		Status:   200,
+		Success:  true,
+		Response: result,
+		Error:    nil,
+	}, nil
+}
+
+func (s *UserProfileServices) UpdateProfile(data *model.UserProfile) (*response.ServerErrRes, *response.ServerRes, error) {
+	if err_1 != nil {
+		return &response.ServerErrRes{
+			Status:   400,
+			Response: "Server Failed",
+		}, nil, err_1
+	}
+
+	// Construct filter to find the document by its ID
+	filter := bson.M{"_id": data.Id}
+
+	// Construct update operation
+	update := bson.M{
+		"$set": bson.M{
+			"email":            data.Email,
+			"phone":            data.Phone,
+			"pronouns":         data.Pronouns,
+			"interestedTopics": data.InterestedTopics,
+			"aboutYou":         data.AboutYou,
+		},
+	}
+
+	// Perform the update operation
+	result, err := collectionProfile.UpdateOne(context.Background(), filter, update)
+
+	if err != nil {
+		return nil, &response.ServerRes{
+			Status:   400,
+			Success:  false,
+			Response: nil,
+			Error:    err,
+		}, err
+	}
+
+	return nil, &response.ServerRes{
+		Status:   200,
+		Success:  true,
+		Response: result,
+		Error:    nil,
+	}, nil
+}

@@ -1,0 +1,10 @@
+# .air.toml
+[build]
+  bin = "./main"          # Path to the binary
+  cmd = "go build -o main" # Build command
+  include_ext = ["go"]   # File extensions to watch
+  exclude_dir = [".git"]
+
+[log]
+  time = "15:04:05"      # Log time format
+  time_format = "RFC3339"
