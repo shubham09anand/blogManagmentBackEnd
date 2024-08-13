@@ -5,8 +5,10 @@ import (
 
 	connection "github.com/shubham09anand/blogManagement/connection"
 	response "github.com/shubham09anand/blogManagement/error"
+	helper "github.com/shubham09anand/blogManagement/helper"
 	model "github.com/shubham09anand/blogManagement/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserProfileServices struct{}
@@ -81,6 +83,55 @@ func (s *UserProfileServices) UpdateProfile(data *model.UserProfile) (*response.
 		Status:   200,
 		Success:  true,
 		Response: result,
+		Error:    nil,
+	}, nil
+}
+
+func (s *UserProfileServices) GetUserPhoto(userId string) (*response.ServerErrRes, *response.ServerRes, error) {
+
+	if err_1 != nil {
+		return &response.ServerErrRes{
+			Status:   400,
+			Response: "Sever Falied",
+		}, nil, err_1
+	}
+
+	id, _, err := helper.ConvertStringToObjectID(userId)
+	if err != nil {
+		return &response.ServerErrRes{
+			Status:   400,
+			Response: "Invalid user ID",
+		}, nil, err
+	}
+
+	// Construct filter to find the document by its ID
+	filter := bson.M{"userId": id}
+
+	// Define a variable to hold the result
+	var result model.UserProfile
+
+	err = collectionProfile.FindOne(context.Background(), filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &response.ServerRes{
+				Status:   200,
+				Success:  false,
+				Response: "user haven't made profile yet",
+				Error:    nil,
+			}, nil
+		}
+		return nil, &response.ServerRes{
+			Status:   200,
+			Success:  false,
+			Response: "Falied To get Photo",
+			Error:    nil,
+		}, nil
+	}
+
+	return nil, &response.ServerRes{
+		Status:   200,
+		Success:  true,
+		Response: result.Photo,
 		Error:    nil,
 	}, nil
 }

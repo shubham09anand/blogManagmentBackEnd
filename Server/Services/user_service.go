@@ -91,16 +91,7 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 	}
 
 	// Generate JWT token
-	if err != nil {
-		return nil, &response.ServerRes{
-			Status:   400,
-			Success:  false,
-			Response: "Token Genration Failed",
-			Error:    nil,
-		}, nil
-	}
-
-	token, err := jwtToken.GenerateToken(user.UserName)
+	token, err := jwtToken.GenerateToken(user.Id.Hex())
 	if err != nil {
 		return &response.ServerErrRes{
 			Status:   500,
@@ -108,11 +99,22 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 		}, nil, err
 	}
 
+	// Create response login data with token and user ID
+	type loginReturnData struct {
+		Token string `json:"token"`
+		Id    string `json:"id"`
+	}
+
+	var responseLoginData = &loginReturnData{
+		Token: token,
+		Id:    user.Id.Hex(),
+	}
+
 	// Login successful
 	return nil, &response.ServerRes{
 		Status:   200,
 		Success:  true,
-		Response: token,
+		Response: responseLoginData,
 		Error:    nil,
 	}, nil
 }

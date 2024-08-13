@@ -114,6 +114,11 @@ func (r *Routes) RoutesFunc(router *gin.Engine) {
 		Services: userServices,
 	}
 
+	// to get the user photo for header
+	getUserPhotoController := &controller.GetUerPhotoController{
+		Services: UserProfileServices,
+	}
+
 	// Define routes with correct handler functions
 	router.POST("/signup", signupController.Signup())
 	router.POST("/login", loginController.Login())
@@ -144,4 +149,6 @@ func (r *Routes) RoutesFunc(router *gin.Engine) {
 	router.GET("/getComments/:blogId", getCommentsController.GetComments())
 
 	router.GET("/getWriterProfile/:userId", getUserProfileController.GetWriterProfile())
+
+	router.POST("/getUserPhoto", getUserPhotoController.GetUserPhoto())
 }
