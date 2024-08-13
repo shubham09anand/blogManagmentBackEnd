@@ -26,7 +26,7 @@ func (s *UserServices) Signup(data *model.UserSignup) (*response.ServerErrRes, *
 	err := collectionUsers.FindOne(context.Background(), filter).Decode(&existingUser)
 	if err == nil {
 		return nil, &response.ServerRes{
-			Status:   400,
+			Status:   200,
 			Success:  false,
 			Response: "user already exists",
 			Error:    err,
