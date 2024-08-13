@@ -7,6 +7,7 @@ import (
 	response "github.com/shubham09anand/blogManagement/error"
 	"github.com/shubham09anand/blogManagement/helper"
 	model "github.com/shubham09anand/blogManagement/model"
+	jwtToken "github.com/shubham09anand/blogManagement/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,16 +19,29 @@ var conn, err = connection.ConnectDB()
 var collectionUsers = conn.Client.Database("blogManagement").Collection("users")
 
 func (s *UserServices) Signup(data *model.UserSignup) (*response.ServerErrRes, *response.ServerRes, error) {
+	// Check same username already exists
+	filter := bson.M{"userName": data.UserName}
+	var existingUser model.UserSignup
 
-	if err != nil {
-		return &response.ServerErrRes{
+	err := collectionUsers.FindOne(context.Background(), filter).Decode(&existingUser)
+	if err == nil {
+		return nil, &response.ServerRes{
 			Status:   400,
-			Response: "Sever Falied",
-		}, nil, err
+			Success:  false,
+			Response: "user already exists",
+			Error:    err,
+		}, nil
+	} else if err != mongo.ErrNoDocuments {
+		return nil, &response.ServerRes{
+			Status:   404,
+			Success:  false,
+			Response: "Somthing Went Wrong",
+			Error:    err,
+		}, nil
 	}
 
+	// Proceed to insert the new user
 	result, err := collectionUsers.InsertOne(context.Background(), data)
-
 	if err != nil {
 		return nil, &response.ServerRes{
 			Status:   400,
@@ -53,7 +67,6 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 	err := collectionUsers.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			// User not found
 			return nil, &response.ServerRes{
 				Status:   404,
 				Success:  false,
@@ -61,32 +74,50 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 				Error:    nil,
 			}, nil
 		}
-		// Other error
 		return &response.ServerErrRes{
 			Status:   500,
 			Response: "Server Failed",
 		}, nil, err
 	}
 
-	// Check password matches
+	// Check password
 	if user.Password != password {
 		return nil, &response.ServerRes{
 			Status:   401,
 			Success:  false,
-			Response: "Incorrect password",
+			Response: "Wrong Credentials",
 			Error:    nil,
 		}, nil
+	}
+
+	// Generate JWT token
+	if err != nil {
+		return nil, &response.ServerRes{
+			Status:   400,
+			Success:  false,
+			Response: "Token Genration Failed",
+			Error:    nil,
+		}, nil
+	}
+
+	token, err := jwtToken.GenerateToken(user.UserName)
+	if err != nil {
+		return &response.ServerErrRes{
+			Status:   500,
+			Response: "Token generation failed",
+		}, nil, err
 	}
 
 	// Login successful
 	return nil, &response.ServerRes{
 		Status:   200,
 		Success:  true,
-		Response: "Login successful",
+		Response: token,
 		Error:    nil,
 	}, nil
 }
 
+// to update password
 func (s *UserServices) Setting(userID string, password string) (*response.ServerErrRes, *response.ServerRes, error) {
 
 	id, _, _ := helper.ConvertStringToObjectID(userID)

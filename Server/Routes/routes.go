@@ -15,12 +15,12 @@ func (r *Routes) RoutesFunc(router *gin.Engine) {
 	BlogServices := &services.BlogServices{}
 	CommentsServices := &services.CommentServices{}
 
-	// sign up
+	// sign up user
 	signupController := &controller.SignupController{
 		Services: userServices,
 	}
 
-	// login up
+	// login up user
 	loginController := &controller.LoginController{
 		Services: userServices,
 	}
