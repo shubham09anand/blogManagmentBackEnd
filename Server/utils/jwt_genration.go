@@ -1,22 +1,43 @@
 package jwtToken
 
 import (
-	"errors"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"io"
 )
 
-var secretKey = []byte("your_secret_key")
-
-// GenerateToken creates a new JWT token
-func GenerateToken(userName string) (string, error) {
-	tokenClaims := jwt.MapClaims{
-		"userName": userName,
-		"exp":      time.Now().Add(time.Hour * 1).Unix(), // Token expiration
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims)
-	return token.SignedString(secretKey)
+func newCipherBlock(key []byte) (cipher.Block, error) {
+	return aes.NewCipher(key)
 }
 
-var ErrInvalidToken = errors.New("invalid token")
+// Encrypt encrypts plaintext using AES with the given key
+func Encrypt(key []byte, plaintext string) (string, error) {
+	block, err := newCipherBlock(key)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert plaintext to bytes and pad it to block size
+	plainBytes := []byte(plaintext)
+	padding := block.BlockSize() - len(plainBytes)%block.BlockSize()
+	paddedPlainBytes := append(plainBytes, byte(padding))
+	for i := 1; i < padding; i++ {
+		paddedPlainBytes = append(paddedPlainBytes, byte(padding))
+	}
+
+	ciphertext := make([]byte, aes.BlockSize+len(paddedPlainBytes))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], paddedPlainBytes)
+
+	// Encode IV and encrypted data
+	ivEncoded := base64.URLEncoding.EncodeToString(iv)
+	ciphertextEncoded := base64.URLEncoding.EncodeToString(ciphertext[aes.BlockSize:])
+	return ivEncoded + ":" + ciphertextEncoded, nil
+}

@@ -90,13 +90,18 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 		}, nil
 	}
 
-	// Generate JWT token
-	token, err := jwtToken.GenerateToken(user.Id.Hex())
+	// Generate encrypted token
+	var key = []byte("your-32-byte-long-key-for-aes-6!") // Ensure this key is 32 bytes for AES-256
+	userID := user.Id.Hex()
+
+	encrypted, err := jwtToken.Encrypt(key, userID)
 	if err != nil {
-		return &response.ServerErrRes{
+		return nil, &response.ServerRes{
 			Status:   500,
-			Response: "Token generation failed",
-		}, nil, err
+			Success:  false,
+			Response: "Token Generation Failed",
+			Error:    nil,
+		}, err
 	}
 
 	// Create response login data with token and user ID
@@ -105,8 +110,8 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 		Id    string `json:"id"`
 	}
 
-	var responseLoginData = &loginReturnData{
-		Token: token,
+	responseLoginData := &loginReturnData{
+		Token: encrypted,
 		Id:    user.Id.Hex(),
 	}
 
@@ -165,7 +170,7 @@ func (s *UserServices) FetchAllUser(ctx context.Context) (*response.ServerErrRes
 
 	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "_id"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
 
-	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	// unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "firstName", Value: 1},
@@ -174,7 +179,7 @@ func (s *UserServices) FetchAllUser(ctx context.Context) (*response.ServerErrRes
 		{Key: "photo", Value: "$author.photo"},
 	}}}
 
-	cursor, err := collectionUsers.Aggregate(ctx, mongo.Pipeline{lookupUsersStage, unwindUsersStage, projectStage})
+	cursor, err := collectionUsers.Aggregate(ctx, mongo.Pipeline{lookupUsersStage, projectStage})
 	if err != nil {
 		return nil, nil, err
 	}

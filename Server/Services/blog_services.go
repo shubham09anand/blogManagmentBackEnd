@@ -156,7 +156,9 @@ func (s *BlogServices) FetchAllBlog(ctx context.Context) (*response.ServerErrRes
 		{Key: "_id", Value: 1},
 		{Key: "title", Value: 1},
 		{Key: "tags", Value: 1},
-		{Key: "content", Value: 1},
+		{Key: "content", Value: bson.D{
+			{Key: "$substrBytes", Value: bson.A{"$content", 0, 200}}, // $substrBytes this is for limiting the qords in content fieed
+		}},
 		{Key: "blogPhoto", Value: 1},
 		{Key: "createdAt", Value: 1},
 		{Key: "authorId", Value: 1},
