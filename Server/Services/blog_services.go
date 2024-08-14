@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	connection "github.com/shubham09anand/blogManagement/connection"
 	response "github.com/shubham09anand/blogManagement/error"
@@ -283,19 +284,21 @@ func (s *BlogServices) FetchWriterBlog(ctx context.Context, writerId string) (*r
 
 	// Execute the aggregation pipeline
 	cursor, err := collectionBlog.Aggregate(ctx, mongo.Pipeline{matchStageAuthorId, lookupUsersStage, unwindUsersStage, lookupProfileStage, unwindProfileStage, projectStage})
+
 	if err != nil {
 		return nil, nil, err
 	}
 	defer cursor.Close(ctx)
 
 	var results []bson.M
+	fmt.Println(len(results))
 	if err := cursor.All(ctx, &results); err != nil {
 		return nil, nil, err
 	}
 
-	if err == mongo.ErrNoDocuments {
+	if len(results) == 0 {
 		return nil, &response.ServerRes{
-			Status:   404,
+			Status:   200,
 			Success:  false,
 			Response: "No blog found with the given ID",
 			Error:    nil,

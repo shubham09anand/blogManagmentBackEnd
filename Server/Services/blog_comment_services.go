@@ -93,9 +93,9 @@ func (s *CommentServices) GetComments(ctx context.Context, blogId string) (*resp
 
 	matchStageBlogId := bson.D{{Key: "$match", Value: bson.D{{Key: "blogId", Value: id}}}}
 
-	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "users"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "_id"}, {Key: "as", Value: "author"}}}}
+	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "users"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "_id"}, {Key: "as", Value: "user"}}}}
 
-	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$user"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
 
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
 
@@ -107,8 +107,8 @@ func (s *CommentServices) GetComments(ctx context.Context, blogId string) (*resp
 		{Key: "blogId", Value: 1},
 		{Key: "comment", Value: 1},
 		{Key: "createdAt", Value: 1},
-		{Key: "firstName", Value: "$author.firstName"},
-		{Key: "lastName", Value: "$author.lastName"},
+		{Key: "firstName", Value: "$user.firstName"},
+		{Key: "lastName", Value: "$user.lastName"},
 		{Key: "photo", Value: "$author.photo"},
 	}}}
 
