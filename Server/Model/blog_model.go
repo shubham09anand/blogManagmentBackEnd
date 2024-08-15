@@ -12,7 +12,7 @@ type Blog struct {
 	Title     string             `json:"title" bson:"title" binding:"required"`
 	Tags      []string           `json:"tags" bson:"tags" binding:"required"`
 	Content   string             `json:"content" bson:"content" binding:"required"`
-	BlogPhoto string             `json:"blogPhoto" bson:"blogPhoto"`
+	BlogPhoto []string           `json:"blogPhoto" bson:"blogPhoto"`
 	CreatedAt time.Time          `json:"createdAt" bson:"createdAt" binding:"required"`
 }
 

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	connection "github.com/shubham09anand/blogManagement/connection"
 	response "github.com/shubham09anand/blogManagement/error"
@@ -138,13 +137,6 @@ func (s *BlogServices) DeleteBlog(blogId string, blogAuthorId string) (*response
 }
 
 func (s *BlogServices) FetchAllBlog(ctx context.Context) (*response.ServerErrRes, *response.ServerRes, error) {
-	if err_2 != nil {
-		return &response.ServerErrRes{
-			Status:   400,
-			Response: "Sever Falied",
-		}, nil, err_2
-	}
-
 	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "users"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "_id"}, {Key: "as", Value: "author"}}}}
 
 	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
@@ -157,9 +149,7 @@ func (s *BlogServices) FetchAllBlog(ctx context.Context) (*response.ServerErrRes
 		{Key: "_id", Value: 1},
 		{Key: "title", Value: 1},
 		{Key: "tags", Value: 1},
-		{Key: "content", Value: bson.D{
-			{Key: "$substrBytes", Value: bson.A{"$content", 0, 200}}, // $substrBytes this is for limiting the qords in content fieed
-		}},
+		{Key: "content", Value: 1}, // Fetch the entire content field
 		{Key: "blogPhoto", Value: 1},
 		{Key: "createdAt", Value: 1},
 		{Key: "authorId", Value: 1},
@@ -180,8 +170,19 @@ func (s *BlogServices) FetchAllBlog(ctx context.Context) (*response.ServerErrRes
 		return nil, nil, err
 	}
 
-	// Debug: Print the fetched results to check the data structure
-	// fmt.Println("Fetched blogs with authors:", results)
+	// Process the results to strip HTML tags and truncate the content field
+	for i, result := range results {
+		if content, ok := result["content"].(string); ok {
+			plainText, err := helper.ExtractPlainText(content)
+			if err != nil {
+				return nil, nil, err
+			}
+			if len(plainText) > 250 {
+				plainText = plainText[:250] // Truncate to 250 characters
+			}
+			results[i]["content"] = plainText
+		}
+	}
 
 	return nil, &response.ServerRes{
 		Status:   200,
@@ -248,16 +249,15 @@ func (s *BlogServices) FetchOneBlog(ctx context.Context, blogId string) (*respon
 	}, nil
 }
 
+// FetchWriterBlog retrieves blog posts by a specific writer and processes the content field to remove HTML tags
 func (s *BlogServices) FetchWriterBlog(ctx context.Context, writerId string) (*response.ServerErrRes, *response.ServerRes, error) {
-
-	if err_2 != nil {
+	authorId, _, err := helper.ConvertStringToObjectID(writerId)
+	if err != nil {
 		return &response.ServerErrRes{
 			Status:   400,
-			Response: "Sever Falied",
-		}, nil, err_2
+			Response: "Invalid writer ID",
+		}, nil, err
 	}
-
-	authorId, _, _ := helper.ConvertStringToObjectID(writerId)
 
 	matchStageAuthorId := bson.D{{Key: "$match", Value: bson.D{{Key: "authorId", Value: authorId}}}}
 
@@ -273,7 +273,7 @@ func (s *BlogServices) FetchWriterBlog(ctx context.Context, writerId string) (*r
 		{Key: "_id", Value: 1},
 		{Key: "title", Value: 1},
 		{Key: "tags", Value: 1},
-		{Key: "content", Value: 1},
+		{Key: "content", Value: 1}, // Fetch the entire content field
 		{Key: "createdAt", Value: 1},
 		{Key: "authorId", Value: 1},
 		{Key: "blogPhoto", Value: 1},
@@ -284,23 +284,35 @@ func (s *BlogServices) FetchWriterBlog(ctx context.Context, writerId string) (*r
 
 	// Execute the aggregation pipeline
 	cursor, err := collectionBlog.Aggregate(ctx, mongo.Pipeline{matchStageAuthorId, lookupUsersStage, unwindUsersStage, lookupProfileStage, unwindProfileStage, projectStage})
-
 	if err != nil {
 		return nil, nil, err
 	}
 	defer cursor.Close(ctx)
 
 	var results []bson.M
-	fmt.Println(len(results))
 	if err := cursor.All(ctx, &results); err != nil {
 		return nil, nil, err
+	}
+
+	// Process the results to strip HTML tags and truncate the content field
+	for i, result := range results {
+		if content, ok := result["content"].(string); ok {
+			plainText, err := helper.ExtractPlainText(content)
+			if err != nil {
+				return nil, nil, err
+			}
+			if len(plainText) > 250 {
+				plainText = plainText[:250] // Truncate to 250 characters
+			}
+			results[i]["content"] = plainText
+		}
 	}
 
 	if len(results) == 0 {
 		return nil, &response.ServerRes{
 			Status:   200,
 			Success:  false,
-			Response: "No blog found with the given ID",
+			Response: "No blog found with the given writer ID",
 			Error:    nil,
 		}, nil
 	}

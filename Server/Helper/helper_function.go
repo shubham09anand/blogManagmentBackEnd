@@ -3,10 +3,12 @@ package helper
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	response "github.com/shubham09anand/blogManagement/error"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/net/html"
 )
 
 func BindJSON(ctx *gin.Context, obj interface{}) bool {
@@ -40,4 +42,28 @@ func ConvertStringToObjectID(inputID string) (primitive.ObjectID, *response.Serv
 	}
 
 	return id, nil, nil
+}
+
+// get text out of raw html
+func ExtractPlainText(htmlContent string) (string, error) {
+	// Parse the HTML document
+	doc, err := html.Parse(strings.NewReader(htmlContent))
+	if err != nil {
+		return "", err
+	}
+
+	// Function to extract text from nodes
+	var extractText func(*html.Node)
+	var textContent strings.Builder
+	extractText = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			textContent.WriteString(n.Data)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			extractText(c)
+		}
+	}
+	extractText(doc)
+
+	return textContent.String(), nil
 }
