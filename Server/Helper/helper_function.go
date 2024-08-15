@@ -30,7 +30,6 @@ func InternalServerError(ctx *gin.Context, err error) bool {
 }
 
 func ConvertStringToObjectID(inputID string) (primitive.ObjectID, *response.ServerRes, error) {
-	fmt.Println("hi")
 	id, err := primitive.ObjectIDFromHex(inputID)
 	if err != nil {
 		return primitive.NilObjectID, &response.ServerRes{

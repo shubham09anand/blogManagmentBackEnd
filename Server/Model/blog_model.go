@@ -13,7 +13,7 @@ type Blog struct {
 	Tags      []string           `json:"tags" bson:"tags" binding:"required"`
 	Content   string             `json:"content" bson:"content" binding:"required"`
 	BlogPhoto []string           `json:"blogPhoto" bson:"blogPhoto"`
-	CreatedAt time.Time          `json:"createdAt" bson:"createdAt" binding:"required"`
+	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
 }
 
 type Comments struct {
