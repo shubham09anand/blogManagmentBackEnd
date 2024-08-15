@@ -41,15 +41,30 @@ func (s *ProfileController) Profile() gin.HandlerFunc {
 
 func (s *ProfileController) UpdateProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var updateprofileData model.UserProfile
+		var requestData struct {
+			FirstName   string            `json:"firstName" binding:"required"`
+			LastName    string            `json:"lastName" binding:"required"`
+			UserProfile model.UserProfile `json:"userProfile" binding:"required"`
+		}
 
-		if !(helper.BindJSON(ctx, &updateprofileData)) {
+		// Bind JSON payload
+		if err := ctx.ShouldBindJSON(&requestData); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":   400,
+				"response": "Binding Error",
+				"error":    err.Error(),
+			})
 			return
 		}
 
-		_, response, err := s.Services.UpdateProfile(&updateprofileData)
-
-		if !(helper.InternalServerError(ctx, err)) {
+		// Call the service to update the profile
+		_, response, err := s.Services.UpdateProfile(requestData.FirstName, requestData.LastName, &requestData.UserProfile)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"status":   500,
+				"response": response.Response,
+				"error":    err.Error(),
+			})
 			return
 		}
 

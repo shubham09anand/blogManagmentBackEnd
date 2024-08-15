@@ -46,7 +46,7 @@ func (s *UserProfileServices) Profile(data *model.UserProfile) (*response.Server
 	}, nil
 }
 
-func (s *UserProfileServices) UpdateProfile(data *model.UserProfile) (*response.ServerErrRes, *response.ServerRes, error) {
+func (s *UserProfileServices) UpdateProfile(firstName string, lastName string, data *model.UserProfile) (*response.ServerErrRes, *response.ServerRes, error) {
 	if err_1 != nil {
 		return &response.ServerErrRes{
 			Status:   400,
@@ -54,43 +54,71 @@ func (s *UserProfileServices) UpdateProfile(data *model.UserProfile) (*response.
 		}, nil, err_1
 	}
 
-	fmt.Println(data.Id)
-	// idStr := data.Id
-	// objectID, err := primitive.ObjectIDFromHex(idStr)
-	// if err != nil {
-	// 	fmt.Println("This is error")
-	// }
-	// Construct filter to find the document by its ID
-	filter := bson.M{"userId": "objectID"}
-
-	// Construct update operation
-	update := bson.M{
-		"$set": bson.M{
-			"email":            data.Email,
-			"phone":            data.Phone,
-			"pronouns":         data.Pronouns,
-			"interestedTopics": data.InterestedTopics,
-			"aboutYou":         data.AboutYou,
-		},
-	}
-
-	// Perform the update operation
-	result, err := collectionProfile.UpdateOne(context.Background(), filter, update)
-
+	session, err := conn_1.Client.StartSession()
 	if err != nil {
 		return nil, &response.ServerRes{
-			Status:   400,
+			Status:   500,
 			Success:  false,
-			Response: nil,
+			Response: "Failed to start session",
 			Error:    err,
 		}, err
+	}
+
+	fmt.Println("Services")
+	fmt.Println(firstName)
+	fmt.Println(lastName)
+	fmt.Println(data)
+
+	defer session.EndSession(context.Background())
+
+	err = mongo.WithSession(context.Background(), session, func(sc mongo.SessionContext) error {
+		// Update profile document
+		filterProfile := bson.M{"userId": data.UserId}
+		updateProfile := bson.M{
+			"$set": bson.M{
+				"email":            data.Email,
+				"photo":            data.Photo,
+				"phone":            data.Phone,
+				"pronouns":         data.Pronouns,
+				"interestedTopics": data.InterestedTopics,
+				"aboutYou":         data.AboutYou,
+			},
+		}
+
+		_, err := collectionProfile.UpdateOne(sc, filterProfile, updateProfile)
+		if err != nil {
+			return err
+		}
+
+		// Update user document
+		collectionUsers := conn_1.Client.Database("blogManagement").Collection("users")
+		filterUser := bson.M{"_id": data.UserId}
+		updateUsers := bson.M{
+			"$set": bson.M{
+				"firstName": firstName,
+				"lastName":  lastName,
+			},
+		}
+
+		_, err = collectionUsers.UpdateOne(sc, filterUser, updateUsers)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return &response.ServerErrRes{
+			Status:   500,
+			Response: "Failed to update documents",
+		}, nil, err
 	}
 
 	return nil, &response.ServerRes{
 		Status:   200,
 		Success:  true,
-		Response: result,
-		Error:    nil,
+		Response: "Documents updated successfully",
 	}, nil
 }
 

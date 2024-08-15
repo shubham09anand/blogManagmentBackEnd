@@ -259,37 +259,37 @@ func (s *UserServices) GetWriterProfile(ctx context.Context, writerId string) (*
 
 	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "_id"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
 
-	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	// unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "firstName", Value: 1},
 		{Key: "lastName", Value: 1},
 		{Key: "userName", Value: 1},
 		{Key: "createdAt", Value: 1},
-		{Key: "aboutYou", Value: "$author.aboutYou"},
 		{Key: "interestedTopics", Value: "$author.interestedTopics"},
 		{Key: "pronouns", Value: "$author.pronouns"},
+		{Key: "aboutYou", Value: "$author.aboutYou"},
 		{Key: "phone", Value: "$author.phone"},
 		{Key: "photo", Value: "$author.photo"},
 		{Key: "email", Value: "$author.email"},
 	}}}
 
-	cursor, err := collectionUsers.Aggregate(ctx, mongo.Pipeline{matchStage, lookupUsersStage, unwindUsersStage, projectStage})
+	cursor, err := collectionUsers.Aggregate(ctx, mongo.Pipeline{matchStage, lookupUsersStage, projectStage})
 	if err != nil {
 		return nil, nil, err
 	}
 	defer cursor.Close(ctx)
 
 	// Define a variable to store the results
-	var tags []bson.M
-	if err := cursor.All(ctx, &tags); err != nil {
+	var writerProfile []bson.M
+	if err := cursor.All(ctx, &writerProfile); err != nil {
 		return nil, nil, err
 	}
 
 	return nil, &response.ServerRes{
 		Status:   200,
 		Success:  true,
-		Response: tags,
+		Response: writerProfile,
 		Error:    nil,
 	}, nil
 }
