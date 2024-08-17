@@ -59,9 +59,10 @@ func (s *BlogServices) UpdateBlog(data *model.Blog) (*response.ServerErrRes, *re
 
 	updateValue := bson.M{
 		"$set": bson.M{
-			"title":   data.Title,
-			"content": data.Content,
-			"tags":    data.Tags,
+			"title":     data.Title,
+			"content":   data.Content,
+			"tags":      data.Tags,
+			"blogPhoto": data.BlogPhoto,
 		},
 	}
 
