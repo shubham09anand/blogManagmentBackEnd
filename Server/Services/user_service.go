@@ -91,10 +91,11 @@ func (s *UserServices) Login(userName, password string) (*response.ServerErrRes,
 	}
 
 	// Generate encrypted token
-	var key = []byte("your-32-byte-long-key-for-aes-6!") // Ensure this key is 32 bytes for AES-256
+	var key = []byte("very secret key")
 	userID := user.Id.Hex()
 
 	encrypted, err := jwtToken.Encrypt(key, userID)
+
 	if err != nil {
 		return nil, &response.ServerRes{
 			Status:   500,
