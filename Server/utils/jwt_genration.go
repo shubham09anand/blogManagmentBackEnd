@@ -18,7 +18,7 @@ func Encrypt(key []byte, plaintext string) (string, error) {
 	claims := &Claims{
 		Plaintext: plaintext,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * 60 * 60 * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Second)),
 		},
 	}
 
