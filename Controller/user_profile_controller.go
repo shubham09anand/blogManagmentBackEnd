@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	helper "github.com/shubham09anand/blogManagement/helper"
-	model "github.com/shubham09anand/blogManagement/model"
-	services "github.com/shubham09anand/blogManagement/services"
+	helper "github.com/shubham09anand/blogManagement/Helper"
+	model "github.com/shubham09anand/blogManagement/Model"
+	services "github.com/shubham09anand/blogManagement/Services"
 )
 
 type ProfileController struct {

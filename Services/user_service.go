@@ -3,10 +3,10 @@ package services
 import (
 	"context"
 
-	connection "github.com/shubham09anand/blogManagement/connection"
-	response "github.com/shubham09anand/blogManagement/error"
-	"github.com/shubham09anand/blogManagement/helper"
-	model "github.com/shubham09anand/blogManagement/model"
+	connection "github.com/shubham09anand/blogManagement/Connection"
+	response "github.com/shubham09anand/blogManagement/Error"
+	helper "github.com/shubham09anand/blogManagement/Helper"
+	model "github.com/shubham09anand/blogManagement/Model"
 	jwtToken "github.com/shubham09anand/blogManagement/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

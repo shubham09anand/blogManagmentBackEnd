@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	response "github.com/shubham09anand/blogManagement/error"
+	response "github.com/shubham09anand/blogManagement/Error"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/net/html"
 )

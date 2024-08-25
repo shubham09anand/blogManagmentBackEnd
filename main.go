@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shubham09anand/blogManagement/routes"
+	routes "github.com/shubham09anand/blogManagement/Routes"
 
 	"os"
 

@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	controller "github.com/shubham09anand/blogManagement/controller"
-	services "github.com/shubham09anand/blogManagement/services"
+	controller "github.com/shubham09anand/blogManagement/Controller"
+	services "github.com/shubham09anand/blogManagement/Services"
 )
 
 type Routes struct{}
