@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	connection "github.com/shubham09anand/blogManagement/Connection"
 	response "github.com/shubham09anand/blogManagement/Error"
@@ -10,6 +9,7 @@ import (
 	model "github.com/shubham09anand/blogManagement/Model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserProfileServices struct{}
@@ -54,64 +54,44 @@ func (s *UserProfileServices) UpdateProfile(firstName string, lastName string, d
 		}, nil, err_1
 	}
 
-	session, err := conn_1.Client.StartSession()
-	if err != nil {
-		return nil, &response.ServerRes{
-			Status:   500,
-			Success:  false,
-			Response: "Failed to start session",
-			Error:    err,
-		}, err
+	// Update profile document or insert if not exists
+	filterProfile := bson.M{"userId": data.UserId}
+	updateProfile := bson.M{
+		"$set": bson.M{
+			"email":            data.Email,
+			"photo":            data.Photo,
+			"phone":            data.Phone,
+			"pronouns":         data.Pronouns,
+			"interestedTopics": data.InterestedTopics,
+			"aboutYou":         data.AboutYou,
+		},
 	}
+	upsertOptions := options.Update().SetUpsert(true)
 
-	fmt.Println("Services")
-	fmt.Println(firstName)
-	fmt.Println(lastName)
-	fmt.Println(data)
-
-	defer session.EndSession(context.Background())
-
-	err = mongo.WithSession(context.Background(), session, func(sc mongo.SessionContext) error {
-		// Update profile document
-		filterProfile := bson.M{"userId": data.UserId}
-		updateProfile := bson.M{
-			"$set": bson.M{
-				"email":            data.Email,
-				"photo":            data.Photo,
-				"phone":            data.Phone,
-				"pronouns":         data.Pronouns,
-				"interestedTopics": data.InterestedTopics,
-				"aboutYou":         data.AboutYou,
-			},
-		}
-
-		_, err := collectionProfile.UpdateOne(sc, filterProfile, updateProfile)
-		if err != nil {
-			return err
-		}
-
-		// Update user document
-		collectionUsers := conn_1.Client.Database("blogManagement").Collection("users")
-		filterUser := bson.M{"_id": data.UserId}
-		updateUsers := bson.M{
-			"$set": bson.M{
-				"firstName": firstName,
-				"lastName":  lastName,
-			},
-		}
-
-		_, err = collectionUsers.UpdateOne(sc, filterUser, updateUsers)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
+	// Use Upsert option to insert if the document does not exist
+	_, err := collectionProfile.UpdateOne(context.Background(), filterProfile, updateProfile, upsertOptions)
 	if err != nil {
 		return &response.ServerErrRes{
 			Status:   500,
-			Response: "Failed to update documents",
+			Response: "Failed to update or insert profile document",
+		}, nil, err
+	}
+
+	// Update user document
+	collectionUsers := conn_1.Client.Database("blogManagement").Collection("users")
+	filterUser := bson.M{"_id": data.UserId}
+	updateUsers := bson.M{
+		"$set": bson.M{
+			"firstName": firstName,
+			"lastName":  lastName,
+		},
+	}
+
+	_, err = collectionUsers.UpdateOne(context.Background(), filterUser, updateUsers)
+	if err != nil {
+		return &response.ServerErrRes{
+			Status:   500,
+			Response: "Failed to update user document",
 		}, nil, err
 	}
 
