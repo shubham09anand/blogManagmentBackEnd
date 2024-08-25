@@ -1,13 +1,28 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shubham09anand/blogManagement/routes"
+
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
 	r := gin.Default()
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = os.Getenv("PROJECT_PORT")
+	}
 
 	// Initialize routes
 	r.Use(CORSMiddleware())
@@ -15,7 +30,7 @@ func main() {
 	routes.RoutesFunc(r)
 
 	// Start the server
-	r.Run(":4000")
+	r.Run(":" + port)
 }
 
 func CORSMiddleware() gin.HandlerFunc {

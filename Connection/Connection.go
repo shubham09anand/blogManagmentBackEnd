@@ -3,8 +3,11 @@ package connection
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	options "go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -20,8 +23,16 @@ type Connection struct {
 
 // ConnectDB initializes a new MongoDB connection and returns a Connection struct
 func ConnectDB() (*Connection, error) {
-	urlStr := "mongodb://127.0.0.1:27017"
-	port := "27017"
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	databaseURL := os.Getenv("DATABASE_URL")
+
+	// urlStr := "mongodb://127.0.0.1:27017"
+	urlStr := databaseURL
+	port := os.Getenv("DATABASE_PORT")
 
 	// Create a new MongoDB client with the specified URI
 	clientOptions := options.Client().ApplyURI(urlStr)
