@@ -99,7 +99,7 @@ func (s *CommentServices) GetComments(ctx context.Context, blogId string) (*resp
 
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
 
-	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "_id", Value: 1},

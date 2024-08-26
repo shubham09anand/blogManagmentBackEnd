@@ -144,7 +144,8 @@ func (s *BlogServices) FetchAllBlog(ctx context.Context) (*response.ServerErrRes
 
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "profile"}}}}
 
-	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	// Update this to preserve empty arrays (i.e., blogs without profiles)
+	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "_id", Value: 1},
@@ -212,7 +213,7 @@ func (s *BlogServices) FetchOneBlog(ctx context.Context, blogId string) (*respon
 
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "profile"}}}}
 
-	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "_id", Value: 1},
@@ -268,7 +269,7 @@ func (s *BlogServices) FetchWriterBlog(ctx context.Context, writerId string) (*r
 
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "profile"}}}}
 
-	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$profile"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "_id", Value: 1},
