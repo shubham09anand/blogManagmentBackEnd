@@ -21,7 +21,7 @@ type Connection struct {
 // ConnectDB initializes a new MongoDB connection and returns a Connection struct
 func ConnectDB() (*Connection, error) {
 
-	urlStr := "mongodb://3.6.164.210:27017"
+	urlStr := "mongodb://13.202.120.172:27017"
 	// urlStr := "mongodb://127.0.0.1:27017"
 
 	// urlStr := databaseURL
