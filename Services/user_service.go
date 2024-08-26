@@ -212,7 +212,7 @@ func (s *UserServices) GetAllWriterName(ctx context.Context) (*response.ServerEr
 
 	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "_id"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
 
-	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
+	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "firstName", Value: 1},
