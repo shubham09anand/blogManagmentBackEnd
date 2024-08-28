@@ -225,6 +225,7 @@ func (s *BlogServices) FetchOneBlog(ctx context.Context, blogId string) (*respon
 		{Key: "authorId", Value: 1},
 		{Key: "firstName", Value: "$author.firstName"},
 		{Key: "lastName", Value: "$author.lastName"},
+		{Key: "userName", Value: "$author.userName"},
 		{Key: "photo", Value: "$profile.photo"},
 	}}}
 
