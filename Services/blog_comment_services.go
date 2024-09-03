@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"errors"
+
+	"log"
 
 	connection "github.com/shubham09anand/blogManagement/Connection"
 	response "github.com/shubham09anand/blogManagement/Error"
@@ -14,20 +17,27 @@ import (
 
 type CommentServices struct{}
 
-var conn_5, err_5 = connection.ConnectDB()
+var conn_5 *connection.Connection
+var collectionComment *mongo.Collection
 
-var collectionComment = conn_5.Client.Database("blogManagement").Collection("comment")
+func init() {
+	var err error
+	conn_5, err = connection.ConnectDB()
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	collectionComment = conn_5.Client.Database("blogManagement").Collection("comment")
+}
 
 func (s *CommentServices) MakeComment(data *model.Comments) (*response.ServerErrRes, *response.ServerRes, error) {
-	if err_5 != nil {
+	if conn_5 == nil {
 		return &response.ServerErrRes{
 			Status:   400,
-			Response: "Sever Falied",
-		}, nil, err_5
+			Response: "Server Failed",
+		}, nil, errors.New("database connection is not initialized")
 	}
 
 	result, err := collectionComment.InsertOne(context.Background(), data)
-
 	if err != nil {
 		return nil, &response.ServerRes{
 			Status:   400,
@@ -46,19 +56,17 @@ func (s *CommentServices) MakeComment(data *model.Comments) (*response.ServerErr
 }
 
 func (s *CommentServices) DeleteComment(commentId string) (*response.ServerErrRes, *response.ServerRes, error) {
-	if err_5 != nil {
+	if conn_5 == nil {
 		return &response.ServerErrRes{
 			Status:   400,
-			Response: "Sever Falied",
-		}, nil, err_5
+			Response: "Server Failed",
+		}, nil, errors.New("database connection is not initialized")
 	}
 
 	id, _, _ := helper.ConvertStringToObjectID(commentId)
-
 	filter := bson.M{"_id": id}
 
 	result, err := collectionComment.DeleteOne(context.Background(), filter)
-
 	if err != nil {
 		return nil, &response.ServerRes{
 			Status:   400,
@@ -77,30 +85,28 @@ func (s *CommentServices) DeleteComment(commentId string) (*response.ServerErrRe
 }
 
 func (s *CommentServices) GetComments(ctx context.Context, blogId string) (*response.ServerErrRes, *response.ServerRes, error) {
-
-	if err_5 != nil {
+	if conn_5 == nil {
 		return &response.ServerErrRes{
 			Status:   400,
 			Response: "Server Failed",
-		}, nil, err_5
+		}, nil, errors.New("database connection is not initialized")
 	}
 
 	id, err := primitive.ObjectIDFromHex(blogId)
-
 	if err != nil {
-		return nil, &response.StringToObjevctIdError, nil
+		return nil, &response.ServerRes{
+			Status:   400,
+			Success:  false,
+			Response: "Failed to convert string to ObjectID",
+			Error:    err,
+		}, nil
 	}
 
 	matchStageBlogId := bson.D{{Key: "$match", Value: bson.D{{Key: "blogId", Value: id}}}}
-
 	lookupUsersStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "users"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "_id"}, {Key: "as", Value: "user"}}}}
-
 	unwindUsersStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$user"}, {Key: "preserveNullAndEmptyArrays", Value: false}}}}
-
 	lookupProfileStage := bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "profile"}, {Key: "localField", Value: "authorId"}, {Key: "foreignField", Value: "userId"}, {Key: "as", Value: "author"}}}}
-
 	unwindProfileStage := bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$author"}, {Key: "preserveNullAndEmptyArrays", Value: true}}}}
-
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
 		{Key: "_id", Value: 1},
 		{Key: "authorId", Value: 1},
@@ -113,7 +119,6 @@ func (s *CommentServices) GetComments(ctx context.Context, blogId string) (*resp
 	}}}
 
 	cursor, err := collectionComment.Aggregate(ctx, mongo.Pipeline{matchStageBlogId, lookupUsersStage, unwindUsersStage, lookupProfileStage, unwindProfileStage, projectStage})
-
 	if err != nil {
 		return nil, nil, err
 	}
