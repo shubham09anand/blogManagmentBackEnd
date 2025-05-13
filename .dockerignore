@@ -1,0 +1,34 @@
+# Binaries
+*.exe
+*.out
+*.dll
+
+# Environment files
+*.env
+
+# IDE and editor files
+*.vscode/
+*.idea/
+*.sublime*
+
+# Dependency and build artifacts
+vendor/
+tmp/
+goBuild/
+
+# Logs and debugging files
+*.log
+*.bak
+*.swp
+
+# Version control
+.git
+.gitignore
+
+# Cache files and directories
+*.cache
+*.tmp
+.DS_Store
+
+# Live reload tools (like Air)
+.air.toml
